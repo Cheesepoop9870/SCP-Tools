@@ -7,8 +7,7 @@ except ImportError as ie:
   install = input("Would you like to install them? (y/n):")
   if install == "y":
     import os
-    os.system("pip install requests")
-    os.system("pip install bs4")
+    os.system("python3 -m pip install requests && python3 -m pip install bs4")
     print("please rerun")
     sys.exit()
   else:
