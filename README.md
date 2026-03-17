@@ -31,3 +31,14 @@ AI Record - MrCoolCool http://05command.wikidot.com/forum/t-17486839/ai-record-m
 * python
 * beautifulsoup4==4.14.3
 * requests==2.32.5
+----
+## AI Record Aggregation
+
+Fetches data from 05command and returns stats by date, also creates file "graph.png" which is a line plot of the data.
+
+### Dependinies:
+* python
+* beatifulsoup4
+* requests
+* matplotlib
+* numpy
