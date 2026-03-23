@@ -1,0 +1,1 @@
+((?<=component:preview\stext=)|(?<=component:preview\s\stext=))[^\[\]\n]+
