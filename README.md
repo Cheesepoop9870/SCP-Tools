@@ -42,3 +42,7 @@ Fetches data from 05command and returns stats by date, also creates file "graph.
 * requests
 * matplotlib
 * numpy
+----
+### Preview Regex
+
+Python flavored regex to mathc preview text in an SCP page
