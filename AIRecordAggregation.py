@@ -1,94 +1,118 @@
+import datetime
 import requests
 import bs4
-import time
 import re
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from datetime import datetime as dt
-
+import asyncio
+import httpx
+try:
+  import fake_useragent
+except ImportError:
+  print("Warning: fake_useragent is reccomended but not nessasarry")
 AI = "https://05command.wikidot.com/forum/c-7852401/p/1"
 
-def get_last_page(url):
+
+
+async def get_page(client, url,sem): # fetch page
+  async with sem: #limit requests
+    try:
+      ua = fake_useragent.UserAgent()
+      headers = {'User-Agent': ua.random}
+    except ModuleNotFoundError:
+      headers = {'User-Agent': 'python-httpx/x.y.z'}
+    response = await client.get(url, headers=headers)
+    print(f'Fetched {url}')
+  return response
+def get_last_page(url): #get last page num
    body = requests.get(url)
    soup = bs4.BeautifulSoup(body.text, 'html.parser')
    lastpage = soup.find('div', class_='pager')
-   lastpage = lastpage.find('span', class_='pager-no').text.strip()
+   lastpage = lastpage.find('span', class_='pager-no').text.strip() #type: ignore
    return int(lastpage.strip('page 1 of '))
 
 pageNum = get_last_page(AI)
 rowlist = []
-datelist = []
+# datelist = []
 authorlist = []
-for x in range(1, pageNum):
-   body = requests.get(f'https://05command.wikidot.com/forum/c-7852401/p/{x}')
-   soup = bs4.BeautifulSoup(body.text, 'html.parser')
-   main_content = soup.find('div', id='page-content')
-   table = main_content.find('table')
-   rows = table.find_all('tr', class_='')
-   for row in rows: 
-     dates = row.find('td', class_='started')
-     datelist.append(dates)
-     author = row.find('td', class_='started').find('span', class_='printuser').find_all('a')
-     author = author[1].text
-     authorlist.append(author)
-   rowlist.append(rows)
-   print(f"Page {x} done.")
-actual_datelist = []
-for date in datelist:
-  actual_datelist.append(date.find('span', class_='odate'))
-print("Done.")
-# print("\n"+str([x.text for x in actual_datelist]))
-
-date_data = [] #day month year hour minute
-
-for actual_date in actual_datelist:
-  # print(actual_date.text.split(" "))
-  date_data.append(actual_date.text.split(" "))
-# print("\n"+str(date_data))
+datelist_unix = []
+async def parse_page(page,pages): #get data out of page async
+  soup = bs4.BeautifulSoup(page.text, 'html.parser')
+  main_content = soup.find('div', id='page-content')
+  table = main_content.find('table')  # type: ignore
+  rows = table.find_all('tr', class_='')  # type: ignore
+  for row in rows:
+    # dates = row.find('span', class_='odate').text  
+    # datelist.append(dates)
+    datelist_unix.append(dt.fromtimestamp(int(row.find('span', class_='odate').get('class')[1].strip("time_")))) # type: ignore
+    author = row.find('td', class_='started').find('span', class_='printuser').find_all('a')  # type: ignore
+    author = author[1].text
+    authorlist.append(author)
+  rowlist.append(rows)
+  print(f"Page {pages.index(page)+1} done.")
+  
+async def scrape_pages(): #scrape all pages
+  urls = [f'https://05command.wikidot.com/forum/c-7852401/p/{x}' for x in range(1, pageNum+1)]
+  sem = asyncio.Semaphore(7) #nessasarry or wikidot murders ur tls handshake
+  async with httpx.AsyncClient() as client: #async client
+    tasks = [get_page(client, url,sem) for url in urls] #fetch page
+    pages = await asyncio.gather(*tasks)
+    tasks = [parse_page(page,pages) for page in pages] #parse page
+    await asyncio.gather(*tasks)
+asyncio.run(scrape_pages()) #run async
+# print(datelist_unix)
+print()
 # print(authorlist)
-data = []
-for x in range(0, len(date_data)):
-  data.append([*date_data[x], authorlist[x]]) #add authors to date data
-actual_authors = []
+# all_dates = np.array([dt.strptime(x, r'%d %b %Y %H:%M') for x in datelist]) #convert to datetime
+all_dates = np.array(datelist_unix)
+all_authors = np.array(authorlist)
+date_author = np.stack((all_dates,all_authors),axis=1) #combine dates and authors
+date_author = date_author[date_author[:,0].argsort()] #sort by date
+unique_months =  np.unique(np.array([x.replace(hour=0,minute=0,second=0,microsecond=0,day=1) for x in all_dates.copy()]), return_counts=True) # remove day and time, add to list
+unique_authors = np.unique(all_authors, return_counts=True)
+print(unique_authors)
+print(unique_months)
+for month in unique_months[0]: 
+  print(month.strftime("%b %Y"))
+plt.figure(1,figsize=(10,5)) #figure 1 (cases over time/month)
+dates =  plt.plot(unique_months[0], unique_months[1]) #plot dates and counts
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y')) #format dates to readable format
+plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=2)) # make all dates show
+plt.gcf().autofmt_xdate() #fix date overlap
 
-for author2 in authorlist: #get unique authors
-  if author2 not in actual_authors:
-    actual_authors.append(author2)
-    
-for x in range(0, len(actual_authors)): #add number of contributions
-  actual_authors[x] = [actual_authors[x],authorlist.count(actual_authors[x])]
-print(actual_authors)
-
-short_date = [] #day month year
-for date in data:
-  short_date.append(" ".join(date[1:3]))
-  # print(" ".join(date[1:3]))
-
-unique_dates = []
-unique_dates2 = []
-for x in range(0, len(short_date)):
-  if short_date[x] not in unique_dates:
-    unique_dates.append(short_date[x])
-for x in range(0, len(unique_dates)):
-  # print([unique_dates[x], short_date.count(unique_dates[x])])
-  unique_dates2.append([unique_dates[x], short_date.count(unique_dates[x])])
-  unique_dates[x] = [dt.strptime(unique_dates[x], "%b %Y"), short_date.count(unique_dates[x])]
-  # print(unique_dates[x])
-# for data2 in data:
-#    print(data2)
-
-dates = plt.plot([x[0] for x in sorted(unique_dates)], [x[1] for x in sorted(unique_dates)])
-plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
-plt.savefig('graph.png')
+plt.axvline(x=dt(2025, 10, 1), color='r', linestyle='--', label="AI is now Perma") #type: ignore add line for when AI is perma
+plt.legend() #add legend
+plt.grid() #add grid
+plt.savefig('graph.png', dpi=300) #save graph
 print("file saved as graph.png")
-output = []
-print("\n\n\n")
-for date_temp in unique_dates2:
-  output.append(date_temp[0])
-print(", ".join(output))
-output = []
-for date_temp in unique_dates2:
-  output.append(date_temp[1])
-print(output)
-print("\n"+str([x[0] for x in actual_authors]))
-print("\n"+str([x[1] for x in actual_authors]))
+
+plt.figure(2, figsize=(10,5)) #author of record
+other_count=0
+unique_authors_trimmed = np.vstack((unique_authors[0],unique_authors[1])).T.tolist()
+# unique_authors_trimmed = [list(x) for x in  list(zip(unique_authors[0],unique_authors[1]))]
+print(unique_authors_trimmed)
+other_count = sum(int(count) for author, count in unique_authors_trimmed if int(count) <= 10) #total um of authors <= 10
+unique_authors_trimmed = [[author, count] for author, count in unique_authors_trimmed if int(count) > 10] #list of authors > 10
+unique_authors_trimmed.append(["Other",other_count]) #add others
+print()
+print(unique_authors_trimmed)
+plt.pie([x[1] for x in unique_authors_trimmed], labels=[x[0] for x in unique_authors_trimmed], autopct='%1.1f%%', radius=1.5,pctdistance=0.7)
+plt.savefig('pie.png', dpi=300)
+print('flie saved as pie.png')
+
+hours = np.unique(np.array([x.replace(year=2000,month=1,day=1,minute=0,second=0) for x in all_dates.copy()]), return_counts=True) # remove 
+hours = np.vstack((hours[0],hours[1])).T
+print(hours)
+plt.figure(3, figsize=(10,5))
+plt.plot([x[0] for x in hours], [x[1] for x in hours])
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=1))
+plt.gcf().autofmt_xdate()
+plt.grid()
+plt.xlabel('Time of day (UTC)')
+plt.ylabel('Number of posts')
+plt.savefig('hours.png', dpi=300)
+print('file saved as hours.png')
+print("\n\n\ndone")
