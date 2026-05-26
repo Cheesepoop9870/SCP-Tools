@@ -35,14 +35,18 @@ AI Record - MrCoolCool http://05command.wikidot.com/forum/t-17486839/ai-record-m
 ## AI Record Aggregation
 
 Fetches data from 05command and returns stats.
+
 note: prints out a bunch of stuff, can probably ignore it (too lazy to remove)
 
 Makes 3 files
 * graph.png
 * pie.png
 * hours.png
+
 graph.png is a graphing of AI records over time, per month
+
 pie.png is a graphing of authors of AI record posts
+
 hours.png is a graphing of the average time of day a record has been started
 
 ### Dependinies:
