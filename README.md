@@ -64,3 +64,9 @@ hours.png is a graphing of the average time of day a record has been started
 ### Preview Regex
 
 Python flavored regex to match preview text in an SCP page
+----
+### Rated Members POC
+
+javascript that you can run in console of a wikidot page and on clicking the look who rated button will perform an action
+
+currently doesnt do much, hence POC
