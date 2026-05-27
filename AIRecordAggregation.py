@@ -1,4 +1,3 @@
-import datetime
 import requests
 import bs4
 import re
@@ -38,6 +37,7 @@ rowlist = []
 # datelist = []
 authorlist = []
 datelist_unix = []
+postlist = []
 async def parse_page(page,pages): #get data out of page async
   soup = bs4.BeautifulSoup(page.text, 'html.parser')
   main_content = soup.find('div', id='page-content')
@@ -50,6 +50,8 @@ async def parse_page(page,pages): #get data out of page async
     author = row.find('td', class_='started').find('span', class_='printuser').find_all('a')  # type: ignore
     author = author[1].text
     authorlist.append(author)
+    posts=row.find('td', class_='posts').text.strip()
+    postlist.append(posts)
   rowlist.append(rows)
   print(f"Page {pages.index(page)+1} done.")
   
@@ -115,4 +117,20 @@ plt.xlabel('Time of day (UTC)')
 plt.ylabel('Number of posts')
 plt.savefig('hours.png', dpi=300)
 print('file saved as hours.png')
+
+unique_posts = np.unique(np.array(postlist), return_counts=True)
+unique_posts = np.vstack((unique_posts[0],unique_posts[1])).T
+unique_posts = sorted(unique_posts, key=lambda x: int(x[0]))
+print(unique_posts)
+posts1 = sum(int(count) for post, count in unique_posts if int(post) <=1)
+posts2 = sum(int(count) for post, count in unique_posts if int(post) == 2)
+posts3 = sum(int(count) for post, count in unique_posts if int(post) == 3)
+posts4to6 = sum(int(count) for post, count in unique_posts if int(post) >= 4 and int(post) <= 6)
+posts7to9 = sum(int(count) for post, count in unique_posts if int(post) >= 7 and int(post) <= 9)
+plus_ten = sum(int(count) for post, count in unique_posts if int(post) >= 10)
+adj_unique_posts = [["1",posts1],["2",posts2],["3",posts3],["4-6",posts4to6],["7-9",posts7to9],["10+",plus_ten]]
+print(adj_unique_posts)
+plt.figure(4, figsize=(7,7))
+plt.bar([x[0] for x in adj_unique_posts], [x[1] for x in adj_unique_posts])
+plt.savefig('posts.png', dpi=300)
 print("\n\n\ndone")
