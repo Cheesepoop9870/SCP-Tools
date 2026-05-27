@@ -38,10 +38,11 @@ Fetches data from 05command and returns stats.
 
 note: prints out a bunch of stuff, can probably ignore it (too lazy to remove)
 
-Makes 3 files
+Makes 4 files
 * graph.png
 * pie.png
 * hours.png
+* posts.png
 
 graph.png is a graphing of AI records over time, per month
 
@@ -49,6 +50,7 @@ pie.png is a graphing of authors of AI record posts
 
 hours.png is a graphing of the average time of day a record has been started
 
+posts.ng is a bar graph of post numbers
 ### Dependinies:
 * python
 * beatifulsoup4
