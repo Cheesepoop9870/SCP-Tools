@@ -1,1 +1,6 @@
+Python:
 ((?<=component:preview\stext=)|(?<=component:preview\s\stext=))[^\[\]\n]+
+PCRE2:
+(?i)\[\[include (?::scp-wiki)?(?::)?component:preview\s+text=\K.+(?=\]\])
+JavaScript:
+(?i:(?<=\[\[include (?::scp-wiki)?:?component:preview\s+text=).+(?=\]\]))
