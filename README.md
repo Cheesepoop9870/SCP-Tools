@@ -65,7 +65,8 @@ posts.ng is a bar graph of post numbers
 ----
 ### Preview Regex
 
-Python flavored regex to match preview text in an SCP page
+Regex to match preview text in an SCP page
+flavoried in Python, PCRE2, and JS
 ----
 ### Rated Members POC
 
