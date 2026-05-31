@@ -1,5 +1,5 @@
 # SCP Tools
-Some tools for the SCP wiki
+Some misc tools for the SCP wiki
 
 ----
 ## 05 Record searcher:
@@ -31,12 +31,14 @@ AI Record - MrCoolCool http://05command.wikidot.com/forum/t-17486839/ai-record-m
 * python
 * beautifulsoup4==4.14.3
 * requests==2.32.5
-----
+-----
 ## AI Record Aggregation
 
 Fetches data from 05command and returns stats.
 
-note: prints out a bunch of stuff, can probably ignore it (too lazy to remove)
+note: prints out a bunch of stuff, can probably ignore it; mostly for debug purposes (too lazy to remove)
+
+TODO: CSV output
 
 Makes 4 files
 * graph.png
@@ -63,12 +65,13 @@ posts.ng is a bar graph of post numbers
 * numpy
 * fake_useragent (recommended)
 ----
-### Preview Regex
+## Preview Regex:
 
-Regex to match preview text in an SCP page
+regex to match preview text in an SCP page
 flavoried in Python, PCRE2, and JS
+
 ----
-### Rated Members POC
+## Rated Members POC
 
 javascript that you can run in console of a wikidot page and on clicking the look who rated button will perform an action
 
